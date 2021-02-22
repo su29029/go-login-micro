@@ -42,9 +42,8 @@ func NewLoginSrvEndpoints() []*api.Endpoint {
 // Client API for LoginSrv service
 
 type LoginSrvService interface {
+	Login(ctx context.Context, in *LoginRequest, opts ...client.CallOption) (*LoginResponse, error)
 	Call(ctx context.Context, in *Request, opts ...client.CallOption) (*Response, error)
-	Stream(ctx context.Context, in *StreamingRequest, opts ...client.CallOption) (LoginSrv_StreamService, error)
-	PingPong(ctx context.Context, opts ...client.CallOption) (LoginSrv_PingPongService, error)
 }
 
 type loginSrvService struct {
@@ -59,6 +58,16 @@ func NewLoginSrvService(name string, c client.Client) LoginSrvService {
 	}
 }
 
+func (c *loginSrvService) Login(ctx context.Context, in *LoginRequest, opts ...client.CallOption) (*LoginResponse, error) {
+	req := c.c.NewRequest(c.name, "LoginSrv.Login", in)
+	out := new(LoginResponse)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *loginSrvService) Call(ctx context.Context, in *Request, opts ...client.CallOption) (*Response, error) {
 	req := c.c.NewRequest(c.name, "LoginSrv.Call", in)
 	out := new(Response)
@@ -69,119 +78,17 @@ func (c *loginSrvService) Call(ctx context.Context, in *Request, opts ...client.
 	return out, nil
 }
 
-func (c *loginSrvService) Stream(ctx context.Context, in *StreamingRequest, opts ...client.CallOption) (LoginSrv_StreamService, error) {
-	req := c.c.NewRequest(c.name, "LoginSrv.Stream", &StreamingRequest{})
-	stream, err := c.c.Stream(ctx, req, opts...)
-	if err != nil {
-		return nil, err
-	}
-	if err := stream.Send(in); err != nil {
-		return nil, err
-	}
-	return &loginSrvServiceStream{stream}, nil
-}
-
-type LoginSrv_StreamService interface {
-	Context() context.Context
-	SendMsg(interface{}) error
-	RecvMsg(interface{}) error
-	Close() error
-	Recv() (*StreamingResponse, error)
-}
-
-type loginSrvServiceStream struct {
-	stream client.Stream
-}
-
-func (x *loginSrvServiceStream) Close() error {
-	return x.stream.Close()
-}
-
-func (x *loginSrvServiceStream) Context() context.Context {
-	return x.stream.Context()
-}
-
-func (x *loginSrvServiceStream) SendMsg(m interface{}) error {
-	return x.stream.Send(m)
-}
-
-func (x *loginSrvServiceStream) RecvMsg(m interface{}) error {
-	return x.stream.Recv(m)
-}
-
-func (x *loginSrvServiceStream) Recv() (*StreamingResponse, error) {
-	m := new(StreamingResponse)
-	err := x.stream.Recv(m)
-	if err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func (c *loginSrvService) PingPong(ctx context.Context, opts ...client.CallOption) (LoginSrv_PingPongService, error) {
-	req := c.c.NewRequest(c.name, "LoginSrv.PingPong", &Ping{})
-	stream, err := c.c.Stream(ctx, req, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return &loginSrvServicePingPong{stream}, nil
-}
-
-type LoginSrv_PingPongService interface {
-	Context() context.Context
-	SendMsg(interface{}) error
-	RecvMsg(interface{}) error
-	Close() error
-	Send(*Ping) error
-	Recv() (*Pong, error)
-}
-
-type loginSrvServicePingPong struct {
-	stream client.Stream
-}
-
-func (x *loginSrvServicePingPong) Close() error {
-	return x.stream.Close()
-}
-
-func (x *loginSrvServicePingPong) Context() context.Context {
-	return x.stream.Context()
-}
-
-func (x *loginSrvServicePingPong) SendMsg(m interface{}) error {
-	return x.stream.Send(m)
-}
-
-func (x *loginSrvServicePingPong) RecvMsg(m interface{}) error {
-	return x.stream.Recv(m)
-}
-
-func (x *loginSrvServicePingPong) Send(m *Ping) error {
-	return x.stream.Send(m)
-}
-
-func (x *loginSrvServicePingPong) Recv() (*Pong, error) {
-	m := new(Pong)
-	err := x.stream.Recv(m)
-	if err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
 // Server API for LoginSrv service
 
 type LoginSrvHandler interface {
+	Login(context.Context, *LoginRequest, *LoginResponse) error
 	Call(context.Context, *Request, *Response) error
-	Stream(context.Context, *StreamingRequest, LoginSrv_StreamStream) error
-	PingPong(context.Context, LoginSrv_PingPongStream) error
 }
 
 func RegisterLoginSrvHandler(s server.Server, hdlr LoginSrvHandler, opts ...server.HandlerOption) error {
 	type loginSrv interface {
+		Login(ctx context.Context, in *LoginRequest, out *LoginResponse) error
 		Call(ctx context.Context, in *Request, out *Response) error
-		Stream(ctx context.Context, stream server.Stream) error
-		PingPong(ctx context.Context, stream server.Stream) error
 	}
 	type LoginSrv struct {
 		loginSrv
@@ -194,91 +101,10 @@ type loginSrvHandler struct {
 	LoginSrvHandler
 }
 
+func (h *loginSrvHandler) Login(ctx context.Context, in *LoginRequest, out *LoginResponse) error {
+	return h.LoginSrvHandler.Login(ctx, in, out)
+}
+
 func (h *loginSrvHandler) Call(ctx context.Context, in *Request, out *Response) error {
 	return h.LoginSrvHandler.Call(ctx, in, out)
-}
-
-func (h *loginSrvHandler) Stream(ctx context.Context, stream server.Stream) error {
-	m := new(StreamingRequest)
-	if err := stream.Recv(m); err != nil {
-		return err
-	}
-	return h.LoginSrvHandler.Stream(ctx, m, &loginSrvStreamStream{stream})
-}
-
-type LoginSrv_StreamStream interface {
-	Context() context.Context
-	SendMsg(interface{}) error
-	RecvMsg(interface{}) error
-	Close() error
-	Send(*StreamingResponse) error
-}
-
-type loginSrvStreamStream struct {
-	stream server.Stream
-}
-
-func (x *loginSrvStreamStream) Close() error {
-	return x.stream.Close()
-}
-
-func (x *loginSrvStreamStream) Context() context.Context {
-	return x.stream.Context()
-}
-
-func (x *loginSrvStreamStream) SendMsg(m interface{}) error {
-	return x.stream.Send(m)
-}
-
-func (x *loginSrvStreamStream) RecvMsg(m interface{}) error {
-	return x.stream.Recv(m)
-}
-
-func (x *loginSrvStreamStream) Send(m *StreamingResponse) error {
-	return x.stream.Send(m)
-}
-
-func (h *loginSrvHandler) PingPong(ctx context.Context, stream server.Stream) error {
-	return h.LoginSrvHandler.PingPong(ctx, &loginSrvPingPongStream{stream})
-}
-
-type LoginSrv_PingPongStream interface {
-	Context() context.Context
-	SendMsg(interface{}) error
-	RecvMsg(interface{}) error
-	Close() error
-	Send(*Pong) error
-	Recv() (*Ping, error)
-}
-
-type loginSrvPingPongStream struct {
-	stream server.Stream
-}
-
-func (x *loginSrvPingPongStream) Close() error {
-	return x.stream.Close()
-}
-
-func (x *loginSrvPingPongStream) Context() context.Context {
-	return x.stream.Context()
-}
-
-func (x *loginSrvPingPongStream) SendMsg(m interface{}) error {
-	return x.stream.Send(m)
-}
-
-func (x *loginSrvPingPongStream) RecvMsg(m interface{}) error {
-	return x.stream.Recv(m)
-}
-
-func (x *loginSrvPingPongStream) Send(m *Pong) error {
-	return x.stream.Send(m)
-}
-
-func (x *loginSrvPingPongStream) Recv() (*Ping, error) {
-	m := new(Ping)
-	if err := x.stream.Recv(m); err != nil {
-		return nil, err
-	}
-	return m, nil
 }

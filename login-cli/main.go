@@ -1,25 +1,34 @@
 package main
 
 import (
-	"login-cli/handler"
-	pb "login-cli/proto"
+	"github.com/micro/cli"
+	"github.com/micro/go-micro/util/log"
+	"github.com/micro/go-micro/web"
 
-	"github.com/micro/micro/v3/service"
-	"github.com/micro/micro/v3/service/logger"
+	"github.com/su29029/go-login-micro/login-cli/handler"
 )
 
 func main() {
-	// Create service
-	srv := service.New(
-		service.Name("login-cli"),
-		service.Version("latest"),
+
+	router := handler.InitRouter()
+
+	service := web.NewService(
+		web.Name("go.micro.login.web"),
+		web.Version("latest"),
+		web.Address(":18088"),
+		web.Handler(router),
 	)
+	if err := service.Init(
+		web.Action(
+			func(c *cli.Context) {
+				// 初始化handler
+				handler.Init()
+			}),
+	); err != nil {
+		log.Fatal(err)
+	}
 
-	// Register handler
-	pb.RegisterLoginCliHandler(srv.Server(), new(handler.LoginCli))
-
-	// Run service
-	if err := srv.Run(); err != nil {
-		logger.Fatal(err)
+	if err := service.Run(); err != nil {
+		log.Fatal(err)
 	}
 }

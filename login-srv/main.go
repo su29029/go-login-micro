@@ -11,7 +11,7 @@ import (
 func main() {
 	// Create service
 	srv := service.New(
-		service.Name("login-srv"),
+		service.Name("go.micro.login.srv"),
 		service.Version("latest"),
 	)
 
