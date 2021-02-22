@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"fmt"
 
 	log "github.com/micro/micro/v3/service/logger"
 
@@ -13,23 +12,20 @@ type LoginSrv struct{}
 
 // Login test login
 func (e *LoginSrv) Login(ctx context.Context, req *loginsrv.LoginRequest, rsp *loginsrv.LoginResponse) error {
-	fmt.Println(req)
+	// fmt.Println(req)
 	log.Info("Received LoginSrv.Login request")
 	rsp.Msg = "success"
 	rsp.Status = 200
-	// rsp = &loginsrv.LoginResponse{
-	// 	Status: 200,
-	// 	Msg:    "success",
-	// }
+
 	return nil
 }
 
-// Call is a single request handler called via client.Call or the generated client code
-func (e *LoginSrv) Call(ctx context.Context, req *loginsrv.Request, rsp *loginsrv.Response) error {
-	log.Info("Received LoginSrv.Call request")
-	rsp.Msg = "Hello " + req.Say
-	return nil
-}
+// // Call is a single request handler called via client.Call or the generated client code
+// func (e *LoginSrv) Call(ctx context.Context, req *loginsrv.Request, rsp *loginsrv.Response) error {
+// 	log.Info("Received LoginSrv.Call request")
+// 	rsp.Msg = "Hello " + req.Say
+// 	return nil
+// }
 
 // // Stream is a server side stream handler called via client.Stream or the generated client code
 // func (e *LoginSrv) Stream(ctx context.Context, req *loginsrv.StreamingRequest, stream loginsrv.LoginSrv_StreamStream) error {

@@ -6,15 +6,6 @@ option go_package = "proto;loginsrv";
 
 service LoginSrv {
 	rpc Login(LoginRequest) returns (LoginResponse) {}
-	rpc Call(Request) returns (Response) {}
-}
-
-message Request {
-	string say = 1;
-}
-
-message Response {
-	string msg = 1;
 }
 
 message LoginRequest {

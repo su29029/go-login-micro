@@ -21,7 +21,7 @@ func main() {
 	if err := service.Init(
 		web.Action(
 			func(c *cli.Context) {
-				// 初始化handler
+				// init handler
 				handler.Init()
 			}),
 	); err != nil {

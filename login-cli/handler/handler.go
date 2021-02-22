@@ -33,22 +33,17 @@ func InitRouter() *gin.Engine {
 
 	r.POST("/register", registerHandler)
 
+	// test loginHandler conveniently
 	r.GET("/login", loginHandler)
 
 	return r
 }
 
 func loginHandler(c *gin.Context) {
-	rsp, err := loginClient.Call(context.Background(), &proto.Request{
-		Say: "1",
-	})
-	fmt.Println(rsp)
 	rsp2, err := loginClient.Login(context.Background(), &proto.LoginRequest{
 		Username: "su29029",
 		Password: "123456a",
 	})
-	fmt.Println("1")
-	fmt.Println(rsp2)
 	if err != nil {
 		fmt.Println(err)
 	}
