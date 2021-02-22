@@ -1,3 +1,3 @@
 # go-login-micro
 
-A test for go-micro, test user register, login and combine the rpc framework with orm framework, web framework, etc.
+A login test for go-micro v3, test user register, login and combine the rpc framework with orm framework, web framework, etc.
