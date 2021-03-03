@@ -2,18 +2,17 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/micro/micro/v3/service"
 
 	"github.com/gin-gonic/gin"
 
-	proto "github.com/su29029/go-login-micro/login-srv/proto"
+	proto "github.com/su29029/go-login-micro/user-srv/proto"
 )
 
 var (
-	loginClient proto.LoginSrvService
+	loginClient proto.UserSrvService
 )
 
 type Error struct {
@@ -23,7 +22,7 @@ type Error struct {
 
 func Init() {
 	srv := service.New()
-	loginClient = proto.NewLoginSrvService("go.micro.login.srv", srv.Client())
+	loginClient = proto.NewUserSrvService("go.micro.user.srv", srv.Client()) // create a new object of UserSrvService, not open up the service.
 }
 
 func InitRouter() *gin.Engine {
@@ -40,22 +39,48 @@ func InitRouter() *gin.Engine {
 }
 
 func loginHandler(c *gin.Context) {
-	rsp2, err := loginClient.Login(context.Background(), &proto.LoginRequest{
-		Username: "su29029",
-		Password: "123456a",
+	var user struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	c.ShouldBind(&user)
+	rsp, err := loginClient.Login(context.Background(), &proto.LoginRequest{
+		Username: user.Username,
+		Password: user.Password,
 	})
 	if err != nil {
-		fmt.Println(err)
+		c.JSON(http.StatusOK, gin.H{
+			"code": 500,
+			"msg":  "internal server error",
+		})
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"code": 200,
-		"msg":  "success",
-	})
+	switch rsp.Status {
+	case 200:
+		c.JSON(http.StatusOK, gin.H{
+			"code": 200,
+			"msg":  rsp.Msg,
+		})
+	case 400:
+		c.JSON(http.StatusOK, gin.H{
+			"code": 400,
+			"msg":  "invalid parameters",
+		})
+	case 401:
+		c.JSON(http.StatusOK, gin.H{
+			"code": 401,
+			"msg":  "wrong username or password",
+		})
+	default:
+		c.JSON(http.StatusOK, gin.H{
+			"code": 500,
+			"msg":  "internal server error",
+		})
+	}
 }
 
 func registerHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"code": 200,
-		"msg":  "success",
+		"msg":  "success register",
 	})
 }
