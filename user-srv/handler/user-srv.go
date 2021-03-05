@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"database/sql"
 
 	usersrv "user-srv/proto"
 
@@ -30,9 +31,33 @@ func (e *UserSrv) Login(ctx context.Context, req *usersrv.LoginRequest, rsp *use
 
 // Register UserSrv register
 func (e *UserSrv) Register(ctx context.Context, req *usersrv.RegisterRequest, rsp *usersrv.UserSrvResponse) error {
+	var username string
 	log.Info("Received UserSrv.Register request")
-	rsp.Msg = "success"
-	rsp.Status = 200
+	if req.Username == "" || req.Password == "" {
+		rsp.Msg = "invalid parameters"
+		rsp.Status = 400
+		return nil
+	}
+	o := db.GetDB()
+	err := o.QueryRow("select username from user where username = ?", req.Username).Scan(&username)
+	if username != "" {
+		rsp.Msg = "fail"
+		rsp.Status = 401
+	} else {
+		if err == sql.ErrNoRows {
+			_, err := o.Exec("insert into user (username, password) values (?, ?)", req.Username, req.Password)
+			if err == nil {
+				rsp.Msg = "success"
+				rsp.Status = 200
+			} else {
+				rsp.Msg = "fail"
+				rsp.Status = 500
+			}
+		} else {
+			rsp.Msg = "fail"
+			rsp.Status = 500
+		}
+	}
 
 	return nil
 }
